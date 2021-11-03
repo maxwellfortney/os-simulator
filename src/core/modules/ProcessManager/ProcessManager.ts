@@ -10,13 +10,7 @@ export class ProcessManager {
   public scheduler: SJF;
 
   public constructor() {
-    // Empty constructor due to forcing a single instance
-    // this.processes = this.loadProcessess();
     this.processes = this.loadProcesses();
-
-    // this.scheduler = new SJF();
-
-    // this.scheduler.start();
   }
 
   public loadScheduler(type: string): void {
