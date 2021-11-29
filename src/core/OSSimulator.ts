@@ -3,17 +3,20 @@ import * as readline from 'readline';
 import { generateRandomProcess } from '../utils';
 import { ProcessStates } from './modules/ProcessManager/Process';
 import { PCB } from './modules/PCB/PCB';
+import { MemoryManager } from './modules/MemoryManager/MemoryManager';
 
 export default class OSSimulator {
   private static instance: OSSimulator;
 
   public processManager: ProcessManager;
+  public memoryManager: MemoryManager;
 
   public pcb: PCB;
 
   private constructor() {
     console.log('constructor called!');
     this.processManager = new ProcessManager();
+    this.memoryManager = new MemoryManager();
   }
 
   static getInstance(): OSSimulator {
@@ -40,10 +43,16 @@ export default class OSSimulator {
     const interval = setInterval(async () => {
       if (this.processManager.scheduler.processQueue.length === 0) {
         console.log(`${this.processManager.scheduler.type} Completed Queue`);
+        console.log(
+          `Memory: ${this.memoryManager.availableMemory}/${this.memoryManager.maxMemory}`,
+        );
         console.table(this.processManager.processes);
       } else {
         console.log(`${this.processManager.scheduler.type} Scheduler Queue`);
         console.log(`PCB has lock: ${this.pcb.hasLock}`);
+        console.log(
+          `Memory: ${this.memoryManager.availableMemory}/${this.memoryManager.maxMemory}`,
+        );
         console.table(this.processManager.scheduler.processQueue);
       }
 
@@ -68,7 +77,6 @@ export default class OSSimulator {
 
           for (let i = 0; i < numProcesses; i++) {
             const randProcess = generateRandomProcess();
-            // randProcess.state = ProcessStates.READY;
 
             this.processManager.processes.push(randProcess);
           }

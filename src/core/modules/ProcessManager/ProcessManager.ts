@@ -45,13 +45,20 @@ export class ProcessManager {
       const args = line.split(' ');
 
       if (args.length == 3) {
-        const operation = new Operation(
-          args[0],
-          parseInt(args[1]),
-          parseInt(args[2]),
-        );
+        try {
+          const operation = new Operation(
+            args[0],
+            parseInt(args[1]),
+            parseInt(args[2]),
+            1,
+            10,
+          );
 
-        operations.push(operation);
+          console.log(operation);
+          operations.push(operation);
+        } catch (e) {
+          console.error(e);
+        }
       }
     });
 

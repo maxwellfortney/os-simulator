@@ -70,7 +70,7 @@ function createRandomOperation(): Operation {
 
   const randomType = OperationTypes[Object.keys(OperationTypes)[rand]];
 
-  const op = new Operation(randomType, 0, 150);
+  const op = new Operation(randomType, 0, 150, 1, 10);
 
   return op;
 }

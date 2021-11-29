@@ -64,6 +64,9 @@ export class PCB {
         process.state = ProcessStates.EXIT;
         process.cyclesRemaining = 0;
 
+        OSSimulator.getInstance().memoryManager.clearChunk(
+          process.memoryRequired,
+        );
         OSSimulator.getInstance().processManager.scheduler.processQueue.shift();
       }
     }, 100);
@@ -73,7 +76,10 @@ export class PCB {
     this.hasLock = true;
     OSSimulator.getInstance().processManager.scheduler.processQueue.forEach(
       (process: Process, i: number) => {
-        if (i !== this.activeProcessIdx) {
+        if (
+          i !== this.activeProcessIdx &&
+          process.state !== ProcessStates.NEW
+        ) {
           process.state = ProcessStates.WAIT;
         }
       },
@@ -84,7 +90,10 @@ export class PCB {
     this.hasLock = false;
     OSSimulator.getInstance().processManager.scheduler.processQueue.forEach(
       (process: Process, i: number) => {
-        if (i !== this.activeProcessIdx) {
+        if (
+          i !== this.activeProcessIdx &&
+          process.state !== ProcessStates.NEW
+        ) {
           process.state = ProcessStates.READY;
         }
       },

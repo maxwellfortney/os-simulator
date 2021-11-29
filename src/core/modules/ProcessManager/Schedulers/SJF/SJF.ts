@@ -15,6 +15,8 @@ export class SJF {
     this.loadProcessesIntoQueue();
 
     const interval = setInterval(() => {
+      this.loadRemainingProcessesIntoQueue();
+
       if (this.processQueue.length > 0) {
         this.sortProcessesByCyclesRequired();
 
@@ -31,34 +33,6 @@ export class SJF {
               (currentTime - this.processQueue[i].arrivalTime).toFixed(3),
             );
           }
-
-          // if (
-          //   this.processQueue[i].state === ProcessStates.READY ||
-          //   this.processQueue[i].state === ProcessStates.WAIT
-          // ) {
-          //   if (
-          //     i === 0 ||
-          //     this.processQueue[i - 1].state === ProcessStates.EXIT
-          //   ) {
-          //     this.processQueue[i].state = ProcessStates.RUN;
-          //     this.processQueue[i].startTime = parseFloat(
-          //       performance.now().toFixed(3),
-          //     );
-          //   } else {
-          //     this.processQueue[i].state = ProcessStates.WAIT;
-
-          //     this.processQueue[i].waitTime = parseFloat(
-          //       (currentTime - this.processQueue[i].arrivalTime).toFixed(3),
-          //     );
-          //   }
-          // } else if (this.processQueue[i].state === ProcessStates.RUN) {
-          //   this.processQueue[i].stopTime = parseFloat(
-          //     (currentTime + this.processQueue[i].cyclesRequired).toFixed(3),
-          //   );
-
-          //   this.processQueue[i].state = ProcessStates.EXIT;
-          //   this.processQueue[i].cyclesRemaining = 0;
-          // }
         }
       } else {
         clearInterval(interval);
@@ -79,7 +53,42 @@ export class SJF {
     OSSimulator.getInstance().processManager.processes.forEach(
       (process: Process) => {
         if (process.state !== ProcessStates.EXIT) {
-          process.state = ProcessStates.READY;
+          if (
+            OSSimulator.getInstance().memoryManager.canFit(
+              process.memoryRequired,
+            )
+          ) {
+            process.state = ProcessStates.READY;
+            OSSimulator.getInstance().memoryManager.addChunk(
+              process.memoryRequired,
+            );
+          }
+        }
+      },
+    );
+
+    // Make this a clone not direct
+    this.processQueue = this.filterCompletedProcesses(
+      OSSimulator.getInstance().processManager.processes.map(
+        (processes) => processes,
+      ),
+    );
+  }
+
+  private loadRemainingProcessesIntoQueue() {
+    OSSimulator.getInstance().processManager.processes.forEach(
+      (process: Process) => {
+        if (process.state === ProcessStates.NEW) {
+          if (
+            OSSimulator.getInstance().memoryManager.canFit(
+              process.memoryRequired,
+            )
+          ) {
+            process.state = ProcessStates.READY;
+            OSSimulator.getInstance().memoryManager.addChunk(
+              process.memoryRequired,
+            );
+          }
         }
       },
     );

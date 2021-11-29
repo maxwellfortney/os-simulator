@@ -6,21 +6,25 @@ export enum OperationTypes {
 
 export class Operation {
   public type: OperationTypes;
-  private minCycles: number;
-  private maxCycles: number;
 
   public cycleLength: number;
+  public memoryRequired: number;
 
-  constructor(type: string, minCycles: number, maxCycles: number) {
+  constructor(
+    type: string,
+    minCycles: number,
+    maxCycles: number,
+    minMem: number,
+    maxMem: number,
+  ) {
     this.type = this.parseOperationType(type);
-    this.minCycles = minCycles;
-    this.maxCycles = maxCycles;
 
-    this.cycleLength = this.randomizeCycleLength(minCycles, maxCycles);
+    this.memoryRequired = this.randomizeInRange(minMem, maxMem);
+    this.cycleLength = this.randomizeInRange(minCycles, maxCycles);
   }
 
-  private randomizeCycleLength(minCycles: number, maxCycles: number): number {
-    return Math.ceil(Math.random() * (maxCycles - minCycles) + minCycles);
+  private randomizeInRange(min: number, max: number): number {
+    return Math.ceil(Math.random() * (max - min) + min);
   }
 
   private parseOperationType(type: string | OperationTypes): OperationTypes {

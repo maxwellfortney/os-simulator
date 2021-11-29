@@ -2,6 +2,8 @@ import { Operation } from './Operation';
 
 import { performance } from 'perf_hooks';
 
+import { v4 as uuidv4 } from 'uuid';
+
 export enum ProcessStates {
   NEW = 'NEW',
   READY = 'READY',
@@ -23,13 +25,23 @@ export class Process {
 
   public criticalSection: [number, number];
 
+  public memoryRequired: number;
+
+  public pid: string;
+
+  public ppid?: string;
+  public cpid?: string;
+
   constructor(operations: Array<Operation>) {
+    this.pid = uuidv4();
+
     this.arrivalTime = parseFloat(performance.now().toFixed(3));
     this.operations = operations;
 
     this.generateCriticalSection();
 
     this.calculateCycleReqForOperations();
+    this.calculateMemoryReqForOperations();
   }
 
   private calculateCycleReqForOperations() {
@@ -40,6 +52,15 @@ export class Process {
     });
 
     this.cyclesRemaining = this.cyclesRequired;
+  }
+
+  private calculateMemoryReqForOperations() {
+    this.memoryRequired = 0;
+
+    this.operations.forEach((operation: Operation) => {
+      console.log('MEM REQ OP', operation.memoryRequired);
+      this.memoryRequired += operation.memoryRequired;
+    });
   }
 
   private generateCriticalSection() {
