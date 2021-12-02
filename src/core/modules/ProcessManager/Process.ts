@@ -3,6 +3,7 @@ import { Operation } from './Operation';
 import { performance } from 'perf_hooks';
 
 import { v4 as uuidv4 } from 'uuid';
+import OSSimulator from '../../OSSimulator';
 
 export enum ProcessStates {
   NEW = 'NEW',
@@ -72,5 +73,18 @@ export class Process {
     );
 
     this.criticalSection = [lower, upper];
+  }
+
+  public createChildProcess() {
+    const cProcess = new Process(this.operations);
+
+    cProcess.ppid = this.pid;
+    this.cpid = cProcess.pid;
+
+    OSSimulator.getInstance().processManager.processes.push(cProcess);
+
+    OSSimulator.getInstance().processManager.scheduler.processQueue.push(
+      cProcess,
+    );
   }
 }

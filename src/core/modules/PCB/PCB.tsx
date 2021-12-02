@@ -1,6 +1,7 @@
 import { performance } from 'perf_hooks';
+import { sleep } from '../../../utils';
 import OSSimulator from '../../OSSimulator';
-import { Operation } from '../ProcessManager/Operation';
+import { Operation, OperationTypes } from '../ProcessManager/Operation';
 import { Process, ProcessStates } from '../ProcessManager/Process';
 
 export class PCB {
@@ -20,15 +21,58 @@ export class PCB {
 
     process.state = ProcessStates.RUN;
 
+    const chanceForRandomIOInterrupt = () => {
+      const percentChance = 5;
+
+      const random = Math.random();
+
+      if (random <= percentChance / 100) {
+        flag = 15;
+        return true;
+      }
+
+      return false;
+    };
+
     let i = 0;
     let cyclesUsed = 0;
 
     process.startTime = parseFloat(performance.now().toFixed(3));
 
-    const interval = setInterval(() => {
-      if (i < process.operations.length) {
-        //critical section is of length 1
+    let flag = 0;
+    let didWait = false;
+
+    const interval = setInterval(async () => {
+      if (chanceForRandomIOInterrupt()) {
+        process.state = ProcessStates.WAIT;
+      }
+      // use flag to wait n intervals
+      if (flag > 0) {
+        if (flag === 1) {
+          process.state = ProcessStates.RUN;
+          didWait = true;
+        }
+        flag += -1;
+        return;
+      }
+
+      if (i < process.operations.length && !didWait) {
+        if (
+          process.operations[i].type == OperationTypes.FORK &&
+          !process.ppid
+        ) {
+          process.createChildProcess();
+        } else if (process.operations[i].type === OperationTypes.IO) {
+          process.state = ProcessStates.WAIT;
+          flag = 15;
+
+          return;
+        }
+
+        if (didWait) didWait = false;
+
         if (process.criticalSection[0] === process.criticalSection[1]) {
+          //critical section is of length 1
           if (i == process.criticalSection[0]) {
             this.getLock();
             cyclesUsed += process.operations[i].cycleLength;
