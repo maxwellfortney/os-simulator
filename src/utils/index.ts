@@ -7,9 +7,7 @@ import {
 /* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require('fs');
 
-export function loadTextFile(filePath: string): any {
-  // const path = process.cwd().toString() + filePath;
-
+export function loadTextFile(filePath: string): string | void {
   try {
     const data = fs.readFileSync(filePath, 'utf8');
     return data.toString();
@@ -18,28 +16,6 @@ export function loadTextFile(filePath: string): any {
     // throw new Error(`Failed to load file from path: ${filePath}`);
   }
 }
-
-// export async function readFilesFromDir(dirname) {
-//   const ret: Array<string> = [];
-
-//   fs.readdir(dirname, function (err, filenames) {
-//     if (err) {
-//       console.log(err);
-//       return;
-//     }
-//     filenames.forEach(function (filename) {
-//       fs.readFile(dirname + filename, 'utf-8', function (err, content) {
-//         if (err) {
-//           console.log(err);
-//           return;
-//         }
-//         ret.push(content);
-//       });
-//     });
-//   });
-
-//   return ret;
-// }
 
 export function readFilesFromDir(dirname: string): Array<string> {
   const files = [];
@@ -75,7 +51,7 @@ function createRandomOperation(): Operation {
   return op;
 }
 
-export function sleep(ms: number) {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

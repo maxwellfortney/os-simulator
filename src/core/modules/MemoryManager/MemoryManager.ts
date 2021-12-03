@@ -2,24 +2,24 @@ export class MemoryManager {
   public maxMemory = 1024;
   public availableMemory = 1024;
 
-  public isFull() {
+  public isFull(): boolean {
     return this.availableMemory <= 0;
   }
 
-  public canFit(size: number) {
+  public canFit(size: number): boolean {
     console.log('CANFIT', this.availableMemory - size > 0);
     return this.availableMemory - size > 0;
   }
 
-  public clear() {
+  public clear(): void {
     this.availableMemory = this.maxMemory;
   }
 
-  public addChunk(size: number) {
+  public addChunk(size: number): void {
     this.availableMemory += -size;
   }
 
-  public clearChunk(size: number) {
+  public clearChunk(size: number): void {
     this.availableMemory += size;
   }
 }

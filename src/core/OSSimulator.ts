@@ -1,7 +1,6 @@
 import { ProcessManager } from './modules/ProcessManager/ProcessManager';
 import * as readline from 'readline';
 import { generateRandomProcess } from '../utils';
-import { ProcessStates } from './modules/ProcessManager/Process';
 import { PCB } from './modules/PCB/PCB';
 import { MemoryManager } from './modules/MemoryManager/MemoryManager';
 
@@ -12,6 +11,10 @@ export default class OSSimulator {
   public memoryManager: MemoryManager;
 
   public pcb: PCB;
+
+  public multiThreaded = false;
+  public threadCount = 12;
+  public clockSpeed = 100;
 
   private constructor() {
     console.log('constructor called!');
@@ -46,12 +49,22 @@ export default class OSSimulator {
         console.log(
           `Memory: ${this.memoryManager.availableMemory}/${this.memoryManager.maxMemory}`,
         );
+        console.log(
+          `MuliThreaded: ${
+            this.multiThreaded ? `true, ${this.threadCount} threads` : 'false'
+          }`,
+        );
         console.table(this.processManager.processes);
       } else {
         console.log(`${this.processManager.scheduler.type} Scheduler Queue`);
         console.log(`PCB has lock: ${this.pcb.hasLock}`);
         console.log(
           `Memory: ${this.memoryManager.availableMemory}/${this.memoryManager.maxMemory}`,
+        );
+        console.log(
+          `MuliThreaded: ${
+            this.multiThreaded ? `true, ${this.threadCount} threads` : 'false'
+          }`,
         );
         console.table(this.processManager.scheduler.processQueue);
       }

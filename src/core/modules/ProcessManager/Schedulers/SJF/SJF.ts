@@ -14,31 +14,37 @@ export class SJF {
     this.sortProcessesByCyclesRequired();
     this.loadProcessesIntoQueue();
 
-    const interval = setInterval(() => {
-      this.loadRemainingProcessesIntoQueue();
+    const interval = setInterval(
+      () => {
+        this.loadRemainingProcessesIntoQueue();
 
-      if (this.processQueue.length > 0) {
-        this.sortProcessesByCyclesRequired();
+        if (this.processQueue.length > 0) {
+          this.sortProcessesByCyclesRequired();
 
-        const currentTime = performance.now();
+          const currentTime = performance.now();
 
-        for (let i = 0; i < this.processQueue.length; i++) {
-          // If the state of i is ready to be run
-          if (this.processQueue[i].state === ProcessStates.READY && i === 0) {
-            OSSimulator.getInstance().pcb.processActiveProcess();
+          for (let i = 0; i < this.processQueue.length; i++) {
+            // If the state of i is ready to be run
+            if (this.processQueue[i].state === ProcessStates.READY && i === 0) {
+              OSSimulator.getInstance().pcb.processActiveProcess();
 
-            // If the state of i is running
-          } else if (this.processQueue[i].state === ProcessStates.READY) {
-            this.processQueue[i].waitTime = parseFloat(
-              (currentTime - this.processQueue[i].arrivalTime).toFixed(3),
-            );
+              // If the state of i is running
+            } else if (this.processQueue[i].state === ProcessStates.READY) {
+              this.processQueue[i].waitTime = parseFloat(
+                (currentTime - this.processQueue[i].arrivalTime).toFixed(3),
+              );
+            }
           }
+        } else {
+          clearInterval(interval);
         }
-      } else {
-        clearInterval(interval);
-      }
-    }, 500);
-    // Schduler runs on cycle of 2 iterations per second
+        // Schduler runs on cycle of 2 iterations per second
+      },
+      OSSimulator.getInstance().multiThreaded
+        ? (5 * OSSimulator.getInstance().clockSpeed) /
+            OSSimulator.getInstance().threadCount
+        : 5 * OSSimulator.getInstance().clockSpeed,
+    );
   }
 
   private sortProcessesByCyclesRequired() {
