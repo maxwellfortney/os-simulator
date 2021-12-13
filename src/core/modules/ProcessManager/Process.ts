@@ -5,6 +5,8 @@ import { performance } from 'perf_hooks';
 import { v4 as uuidv4 } from 'uuid';
 import OSSimulator from '../../OSSimulator';
 
+import { EventEmitter } from 'events';
+
 export enum ProcessStates {
   NEW = 'NEW',
   READY = 'READY',
@@ -33,7 +35,12 @@ export class Process {
   public ppid?: string;
   public cpid?: string;
 
+  public emitter: EventEmitter;
+
+  public messages: string[] = [];
+
   constructor(operations: Array<Operation>) {
+    this.emitter = new EventEmitter();
     this.pid = uuidv4();
 
     this.arrivalTime = parseFloat(performance.now().toFixed(3));
@@ -43,6 +50,10 @@ export class Process {
 
     this.calculateCycleReqForOperations();
     this.calculateMemoryReqForOperations();
+
+    this.emitter.on(`${this.pid}`, (message: string) => {
+      this.messages.push(message);
+    });
   }
 
   private calculateCycleReqForOperations() {
@@ -86,5 +97,19 @@ export class Process {
     OSSimulator.getInstance().processManager.scheduler.processQueue.push(
       cProcess,
     );
+  }
+
+  public sendMessage(processIdx: number, message: string): void {
+    OSSimulator.getInstance().processManager.processes[
+      processIdx
+    ].recieveMessage(message);
+  }
+
+  public recieveMessage(message: string): void {
+    this.messages.push(message);
+  }
+
+  public sendMessageEvent(pid: string, message: string): void {
+    this.emitter.emit(`${pid}`, message);
   }
 }

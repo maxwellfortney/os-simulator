@@ -3,6 +3,7 @@ import {
   Operation,
   OperationTypes,
 } from '../core/modules/ProcessManager/Operation';
+import OSSimulator from '../core/OSSimulator';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require('fs');
@@ -27,6 +28,15 @@ export function readFilesFromDir(dirname: string): Array<string> {
 
   return files;
 }
+
+export function saveFileToDir(
+  dir: string,
+  fileName: string,
+  data: string,
+): void {
+  fs.writeFileSync(`${dir}/${fileName}`, data);
+}
+
 export function generateRandomProcess(): Process {
   const ops: Array<Operation> = [];
 
@@ -55,4 +65,18 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+export function getIntervalSpeed(): number {
+  const os = OSSimulator.getInstance();
+
+  if (os.multiCore && os.multiThreaded) {
+    return (os.coreCount * os.threadCount) / os.clockSpeed;
+  } else if (os.multiCore && !os.multiThreaded) {
+    return os.coreCount / os.clockSpeed;
+  } else if (os.multiThreaded && !os.multiCore) {
+    return os.threadCount / os.clockSpeed;
+  } else {
+    return os.clockSpeed;
+  }
 }

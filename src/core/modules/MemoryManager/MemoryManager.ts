@@ -1,6 +1,11 @@
+import { saveFileToDir } from '../../../utils';
+import OSSimulator from '../../OSSimulator';
+
 export class MemoryManager {
   public maxMemory = 1024;
   public availableMemory = 1024;
+
+  public cached = false;
 
   public isFull(): boolean {
     return this.availableMemory <= 0;
@@ -21,5 +26,13 @@ export class MemoryManager {
 
   public clearChunk(size: number): void {
     this.availableMemory += size;
+  }
+
+  public saveToHDD(): void {
+    saveFileToDir(
+      './HDD',
+      `${Date.now()}.json`,
+      JSON.stringify(OSSimulator.getInstance().processManager.processes),
+    );
   }
 }

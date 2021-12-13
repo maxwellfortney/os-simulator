@@ -1,5 +1,5 @@
 import { performance } from 'perf_hooks';
-import { sleep } from '../../../utils';
+import { getIntervalSpeed, sleep } from '../../../utils';
 import OSSimulator from '../../OSSimulator';
 import { Operation, OperationTypes } from '../ProcessManager/Operation';
 import { Process, ProcessStates } from '../ProcessManager/Process';
@@ -42,84 +42,78 @@ export class PCB {
     let flag = 0;
     let didWait = false;
 
-    const interval = setInterval(
-      async () => {
-        if (chanceForRandomIOInterrupt()) {
-          process.state = ProcessStates.WAIT;
+    const interval = setInterval(async () => {
+      if (chanceForRandomIOInterrupt()) {
+        process.state = ProcessStates.WAIT;
+      }
+      // use flag to wait n intervals
+      if (flag > 0) {
+        if (flag === 1) {
+          process.state = ProcessStates.RUN;
+          didWait = true;
         }
-        // use flag to wait n intervals
-        if (flag > 0) {
-          if (flag === 1) {
-            process.state = ProcessStates.RUN;
-            didWait = true;
-          }
-          flag += -1;
+        flag += -1;
+        return;
+      }
+
+      if (i < process.operations.length && !didWait) {
+        if (
+          process.operations[i].type == OperationTypes.FORK &&
+          !process.ppid
+        ) {
+          process.createChildProcess();
+        } else if (process.operations[i].type === OperationTypes.IO) {
+          process.state = ProcessStates.WAIT;
+          flag = 15;
+
           return;
         }
 
-        if (i < process.operations.length && !didWait) {
-          if (
-            process.operations[i].type == OperationTypes.FORK &&
-            !process.ppid
-          ) {
-            process.createChildProcess();
-          } else if (process.operations[i].type === OperationTypes.IO) {
-            process.state = ProcessStates.WAIT;
-            flag = 15;
+        if (didWait) didWait = false;
 
-            return;
+        if (process.criticalSection[0] === process.criticalSection[1]) {
+          //critical section is of length 1
+          if (i == process.criticalSection[0]) {
+            this.getLock();
+            cyclesUsed += process.operations[i].cycleLength;
+            this.releaseLock();
+          } else {
+            cyclesUsed += process.operations[i].cycleLength;
           }
+        } else {
+          if (i === process.criticalSection[0]) {
+            this.getLock();
+            cyclesUsed += process.operations[i].cycleLength;
+          } else if (i === process.criticalSection[1]) {
+            cyclesUsed += process.operations[i].cycleLength;
 
-          if (didWait) didWait = false;
-
-          if (process.criticalSection[0] === process.criticalSection[1]) {
-            //critical section is of length 1
-            if (i == process.criticalSection[0]) {
-              this.getLock();
-              cyclesUsed += process.operations[i].cycleLength;
+            if (this.hasLock) {
               this.releaseLock();
-            } else {
-              cyclesUsed += process.operations[i].cycleLength;
             }
           } else {
-            if (i === process.criticalSection[0]) {
-              this.getLock();
-              cyclesUsed += process.operations[i].cycleLength;
-            } else if (i === process.criticalSection[1]) {
-              cyclesUsed += process.operations[i].cycleLength;
-
-              if (this.hasLock) {
-                this.releaseLock();
-              }
-            } else {
-              cyclesUsed += process.operations[i].cycleLength;
-            }
+            cyclesUsed += process.operations[i].cycleLength;
           }
-
-          i++;
-        } else {
-          clearInterval(interval);
-
-          const currentTime = performance.now();
-
-          process.stopTime = parseFloat(
-            (currentTime + process.cyclesRequired).toFixed(3),
-          );
-
-          process.state = ProcessStates.EXIT;
-          process.cyclesRemaining = 0;
-
-          OSSimulator.getInstance().memoryManager.clearChunk(
-            process.memoryRequired,
-          );
-          OSSimulator.getInstance().processManager.scheduler.processQueue.shift();
         }
-      },
-      OSSimulator.getInstance().multiThreaded
-        ? OSSimulator.getInstance().clockSpeed /
-            OSSimulator.getInstance().threadCount
-        : OSSimulator.getInstance().clockSpeed,
-    );
+
+        i++;
+      } else {
+        clearInterval(interval);
+
+        const currentTime = performance.now();
+
+        process.stopTime = parseFloat(
+          (currentTime + process.cyclesRequired).toFixed(3),
+        );
+
+        process.state = ProcessStates.EXIT;
+        process.cyclesRemaining = 0;
+
+        OSSimulator.getInstance().memoryManager.clearChunk(
+          process.memoryRequired,
+        );
+        OSSimulator.getInstance().processManager.scheduler.processQueue.shift();
+      }
+    }, getIntervalSpeed());
   }
 
   public getLock(): void {

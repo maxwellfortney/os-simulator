@@ -12,12 +12,14 @@ export default class OSSimulator {
 
   public pcb: PCB;
 
-  public multiThreaded = false;
+  public multiCore = true;
+  public multiThreaded = true;
+
+  public coreCount = 2;
   public threadCount = 12;
   public clockSpeed = 100;
 
   private constructor() {
-    console.log('constructor called!');
     this.processManager = new ProcessManager();
     this.memoryManager = new MemoryManager();
   }
@@ -43,11 +45,20 @@ export default class OSSimulator {
   }
 
   private async printProcesses() {
+    if (this.memoryManager.cached) {
+      this.memoryManager.cached = false;
+    }
+
     const interval = setInterval(async () => {
       if (this.processManager.scheduler.processQueue.length === 0) {
         console.log(`${this.processManager.scheduler.type} Completed Queue`);
         console.log(
           `Memory: ${this.memoryManager.availableMemory}/${this.memoryManager.maxMemory}`,
+        );
+        console.log(
+          `MultiCore: ${
+            this.multiCore ? `true, ${this.coreCount} cores` : 'false'
+          }`,
         );
         console.log(
           `MuliThreaded: ${
@@ -62,6 +73,11 @@ export default class OSSimulator {
           `Memory: ${this.memoryManager.availableMemory}/${this.memoryManager.maxMemory}`,
         );
         console.log(
+          `MultiCore: ${
+            this.multiCore ? `true, ${this.coreCount} cores` : 'false'
+          }`,
+        );
+        console.log(
           `MuliThreaded: ${
             this.multiThreaded ? `true, ${this.threadCount} threads` : 'false'
           }`,
@@ -70,6 +86,10 @@ export default class OSSimulator {
       }
 
       if (this.processManager.scheduler.processingComplete()) {
+        if (!this.memoryManager.cached) {
+          this.memoryManager.saveToHDD();
+          this.memoryManager.cached = true;
+        }
         console.log('\nProcessing complete');
         clearInterval(interval);
         const genProcess = await this.askQuestion(
